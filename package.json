@@ -1,0 +1,29 @@
+{
+  "name": "telegram-referral-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "node-cron": "^3.0.3",
+    "telegraf": "^4.16.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.13.10",
+    "@types/node-cron": "^3.0.11",
+    "nodemon": "^3.1.9"
+  }
+}
