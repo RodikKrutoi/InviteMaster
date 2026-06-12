@@ -1,4 +1,3 @@
-typescript
 import { Context } from 'telegraf';
 import { 
   getUserByTelegramId, 
