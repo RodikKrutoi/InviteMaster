@@ -1,3 +1,4 @@
+import './web';
 import bot from './bot';
 
 // Start the bot
