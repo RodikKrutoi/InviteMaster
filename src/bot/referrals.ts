@@ -29,7 +29,7 @@ export async function handleReferralCommand(ctx: Context) {
     {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
-        Markup.button.url('Поделиться ссылкой', `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Присоединяйтесь к нашей группе и получайте награды!')}`)
+        Markup.button.url('Поделиться ссылкой', `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Зайдите в бота, присоединитесь к нашей группе и получайте награды!')}`)
       ])
     }
   );

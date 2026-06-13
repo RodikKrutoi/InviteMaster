@@ -18,7 +18,7 @@ import {
 import supabase from '../database/supabase';
 
 /**
- * Show the active giveaway status
+ * Показать статус активного розыгрыша
  */
 export async function handleGiveawayCommand(ctx: Context) {
   const giveaway = await getActiveGiveaway();
@@ -33,82 +33,81 @@ export async function handleGiveawayCommand(ctx: Context) {
 }
 
 /**
- * Admin command to create a new giveaway
+ * Команда администратора для создания нового розыгрыша
  */
 export async function handleCreateGiveaway(ctx: Context) {
-  // This would typically include admin verification
-  // For simplicity, we're skipping that part
+  // Обычно здесь должна быть проверка прав администратора
+  // Для простоты пропускаем эту часть
   
   const activeGiveaway = await getActiveGiveaway();
   
   if (activeGiveaway) {
     return ctx.reply(
-      'There is already an active giveaway. ' +
-      'End the current giveaway before starting a new one.'
+      'Уже есть активный розыгрыш. Завершите текущий розыгрыш перед запуском нового.'
     );
   }
   
   const giveaway = await createGiveaway(
-    '$10 Giveaway',
+    'Розыгрыш 100000 FLOPS',
     GIVEAWAY_TARGET_REFERRALS,
     GIVEAWAY_MAX_WINNERS,
     GIVEAWAY_DURATION_DAYS,
-    'Refer friends and win $10! The first 10 users to invite 20+ people will win.'
+    'Приглашайте друзей и выигрывайте 20000 FLOPS! Первые 5 пользователей, пригласившие 10+ человек, получат награду.'
   );
   
   if (!giveaway) {
-    return ctx.reply('Failed to create giveaway. Please try again.');
+    return ctx.reply('Не удалось создать розыгрыш. Пожалуйста, попробуйте снова.');
   }
   
   return ctx.reply(
-    `✅ Giveaway created successfully!\n\n${formatGiveawayStatus(giveaway)}`,
+    `✅ Розыгрыш успешно создан!\n\n${formatGiveawayStatus(giveaway)}`,
     { parse_mode: 'Markdown' }
   );
 }
 
 /**
- * Admin command to end the current giveaway and pick winners
+ * Команда администратора для завершения розыгрыша и выбора победителей
  */
 export async function handleEndGiveaway(ctx: Context) {
-  // This would typically include admin verification
+  // Обычно здесь должна быть проверка прав администратора
   
   const giveaway = await getActiveGiveaway();
   
   if (!giveaway) {
-    return ctx.reply('There is no active giveaway to end.');
+    return ctx.reply('Нет активного розыгрыша для завершения.');
   }
   
   const winners = await registerGiveawayWinners(giveaway.id);
   
   if (winners.length === 0) {
     return ctx.reply(
-      `The giveaway "${giveaway.title}" has ended, but no users qualified for prizes. ` +
-      `Users needed at least ${giveaway.target_referrals} referrals to qualify.`
+      `Розыгрыш "${giveaway.title}" завершён, но никто не прошёл квалификацию. ` +
+      `Участникам нужно было пригласить минимум ${giveaway.target_referrals} человек.`
     );
   }
   
   const fullWinnerData = await getGiveawayWinners(giveaway.id);
   
-  let winnerText = 'The following users have won:\n\n';
+  let winnerText = 'Следующие пользователи выиграли:\n\n';
   
   fullWinnerData.forEach((winner, index) => {
     const user = winner.users;
     const name = user.username || 
                  `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
-                 'Anonymous';
+                 'Аноним';
     
-    winnerText += `${index + 1}. ${name} - ${winner.referral_count} referrals\n`;
+    winnerText += `${index + 1}. ${name} - ${winner.referral_count} приглашений\n`;
   });
   
   return ctx.reply(
-    `🎊 The giveaway "${giveaway.title}" has ended! 🎊\n\n` +
+    `🎊 Розыгрыш "${giveaway.title}" завершён! 🎊\n\n` +
     `${winnerText}\n` +
-    `Congratulations to all winners! Please contact the admin to claim your prize.`
+    `Поздравляем победителей! Свяжитесь с администратором для получения приза.`
   );
 }
 
 /**
- * Schedule function to check for expired giveaways
+ * Функция для автоматической проверки истекших розыгрышей
  */
 export async function checkExpiredGiveaways(bot: any) {
   const giveaway = await getActiveGiveaway();
@@ -121,49 +120,48 @@ export async function checkExpiredGiveaways(bot: any) {
   const endDate = new Date(giveaway.end_date);
   
   if (now >= endDate) {
-    console.log(`Giveaway ${giveaway.id} has expired. Processing winners...`);
+    console.log(`Розыгрыш ${giveaway.id} истёк. Обработка победителей...`);
     
     const winners = await registerGiveawayWinners(giveaway.id);
     
-    // Notify a channel or group about the giveaway ending
-    // This would typically go to an admin channel or the main group
+    // Отправка уведомления в канал или группу
     try {
       if (winners.length === 0) {
         await bot.telegram.sendMessage(
           process.env.ADMIN_CHAT_ID || process.env.GROUP_CHAT_ID,
-          `The giveaway "${giveaway.title}" has ended, but no users qualified for prizes. ` +
-          `Users needed at least ${giveaway.target_referrals} referrals to qualify.`
+          `Розыгрыш "${giveaway.title}" завершён, но никто не прошёл квалификацию. ` +
+          `Участникам нужно было пригласить минимум ${giveaway.target_referrals} человек.`
         );
         return;
       }
       
       const fullWinnerData = await getGiveawayWinners(giveaway.id);
       
-      let winnerText = 'The following users have won:\n\n';
+      let winnerText = 'Следующие пользователи выиграли:\n\n';
       
       fullWinnerData.forEach((winner, index) => {
         const user = winner.users;
         const name = user.username || 
                     `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
-                    'Anonymous';
+                    'Аноним';
         
-        winnerText += `${index + 1}. ${name} - ${winner.referral_count} referrals\n`;
+        winnerText += `${index + 1}. ${name} - ${winner.referral_count} приглашений\n`;
       });
       
       await bot.telegram.sendMessage(
         process.env.ADMIN_CHAT_ID || process.env.GROUP_CHAT_ID,
-        `🎊 The giveaway "${giveaway.title}" has ended! 🎊\n\n` +
+        `🎊 Розыгрыш "${giveaway.title}" завершён! 🎊\n\n` +
         `${winnerText}\n` +
-        `Congratulations to all winners! Please contact the admin to claim your prize.`
+        `Поздравляем победителей! Свяжитесь с администратором для получения приза.`
       );
     } catch (error) {
-      console.error('Error sending giveaway end notification:', error);
+      console.error('Ошибка при отправке уведомления о завершении розыгрыша:', error);
     }
   }
 }
 
 /**
- * Admin command to view details of a specific giveaway
+ * Команда администратора для просмотра деталей конкретного розыгрыша
  */
 export async function handleViewGiveaway(ctx: Context, giveawayId?: number) {
   let giveaway;
@@ -177,28 +175,28 @@ export async function handleViewGiveaway(ctx: Context, giveawayId?: number) {
   if (!giveaway) {
     return ctx.reply(
       giveawayId 
-        ? `No giveaway found with ID ${giveawayId}.` 
-        : 'There is no active giveaway at the moment.'
+        ? `Розыгрыш с ID ${giveawayId} не найден.` 
+        : 'На данный момент нет активного розыгрыша.'
     );
   }
   
-  // Get winners if giveaway has ended
+  // Получаем победителей, если розыгрыш завершён
   let winnerText = '';
   if (!giveaway.is_active) {
     const winners = await getGiveawayWinners(giveaway.id);
     
     if (winners.length > 0) {
-      winnerText = '\n\n*Winners:*\n';
+      winnerText = '\n\n*Победители:*\n';
       winners.forEach((winner, index) => {
         const user = winner.users;
         const name = user.username || 
                     `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
-                    'Anonymous';
+                    'Аноним';
         
-        winnerText += `${index + 1}. ${name} - ${winner.referral_count} referrals\n`;
+        winnerText += `${index + 1}. ${name} - ${winner.referral_count} приглашений\n`;
       });
     } else {
-      winnerText = '\n\n*No winners for this giveaway.*';
+      winnerText = '\n\n*Нет победителей в этом розыгрыше.*';
     }
   }
   
@@ -206,21 +204,21 @@ export async function handleViewGiveaway(ctx: Context, giveawayId?: number) {
   const endDate = new Date(giveaway.end_date);
   
   return ctx.reply(
-    `🎁 *Giveaway Details* 🎁\n\n` +
-    `*Title:* ${giveaway.title}\n` +
-    `*Description:* ${giveaway.description || 'No description'}\n` +
-    `*Target Referrals:* ${giveaway.target_referrals}\n` +
-    `*Max Winners:* ${giveaway.max_winners}\n` +
-    `*Start Date:* ${formatDate(startDate)}\n` +
-    `*End Date:* ${formatDate(endDate)}\n` +
-    `*Status:* ${giveaway.is_active ? 'Active' : 'Ended'}` +
+    `🎁 *Детали розыгрыша* 🎁\n\n` +
+    `*Название:* ${giveaway.title}\n` +
+    `*Описание:* ${giveaway.description || 'Нет описания'}\n` +
+    `*Целевое количество приглашений:* ${giveaway.target_referrals}\n` +
+    `*Максимум победителей:* ${giveaway.max_winners}\n` +
+    `*Дата начала:* ${formatDate(startDate)}\n` +
+    `*Дата окончания:* ${formatDate(endDate)}\n` +
+    `*Статус:* ${giveaway.is_active ? 'Активен' : 'Завершён'}` +
     `${winnerText}`,
     { parse_mode: 'Markdown' }
   );
 }
 
 /**
- * Admin command to list all giveaways
+ * Команда администратора для просмотра всех розыгрышей
  */
 export async function handleListGiveaways(ctx: Context) {
   const { data, error } = await supabase
@@ -229,26 +227,26 @@ export async function handleListGiveaways(ctx: Context) {
     .order('start_date', { ascending: false });
   
   if (error) {
-    console.error('Error fetching giveaways:', error);
-    return ctx.reply('Failed to fetch giveaways. Please try again.');
+    console.error('Ошибка при получении розыгрышей:', error);
+    return ctx.reply('Не удалось получить список розыгрышей. Попробуйте снова.');
   }
   
   if (data.length === 0) {
-    return ctx.reply('No giveaways found.');
+    return ctx.reply('Розыгрыши не найдены.');
   }
   
-  let giveawayText = '*All Giveaways:*\n\n';
+  let giveawayText = '*Все розыгрыши:*\n\n';
   
   data.forEach((giveaway, index) => {
     const startDate = new Date(giveaway.start_date);
     const endDate = new Date(giveaway.end_date);
-    const status = giveaway.is_active ? '🟢 Active' : '🔴 Ended';
+    const status = giveaway.is_active ? '🟢 Активен' : '🔴 Завершён';
     
     giveawayText += `${index + 1}. *${giveaway.title}* (ID: ${giveaway.id})\n` +
-                    `   ${status} | ${formatDate(startDate)} to ${formatDate(endDate)}\n\n`;
+                    `   ${status} | ${formatDate(startDate)} — ${formatDate(endDate)}\n\n`;
   });
   
-  giveawayText += 'Use `/viewgiveaway <ID>` to see details of a specific giveaway.';
+  giveawayText += 'Используйте `/viewgiveaway <ID>` для просмотра деталей конкретного розыгрыша.';
   
   return ctx.reply(giveawayText, { parse_mode: 'Markdown' });
 }

@@ -16,6 +16,8 @@ import {
   handleGiveawayCommand, 
   handleCreateGiveaway, 
   handleEndGiveaway,
+  handleViewGiveaway,
+  handleListGiveaways,
   checkExpiredGiveaways
 } from './giveaways';
 import {
@@ -44,10 +46,16 @@ bot.command('giveaway', handleGiveawayCommand);
 bot.command('config_group', handleConfigGroup);
 
 // Admin commands
-// In a real-world scenario, you'd want to restrict these to admins
 const adminCommands = new Composer();
 adminCommands.command('creategiveaway', handleCreateGiveaway);
 adminCommands.command('endgiveaway', handleEndGiveaway);
+adminCommands.command('startgiveaway', handleCreateGiveaway);
+adminCommands.command('listgiveaways', handleListGiveaways);
+adminCommands.command('viewgiveaway', async (ctx) => {
+  const parts = ctx.message.text.split(' ');
+  const giveawayId = parts[1] ? parseInt(parts[1]) : undefined;
+  await handleViewGiveaway(ctx, giveawayId);
+});
 bot.use(adminCommands);
 
 // Handle leaderboard command (supports both private and group chats)
